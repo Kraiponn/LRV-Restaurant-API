@@ -17,6 +17,7 @@ class DefaultAcceptJson
     public function handle(Request $request, Closure $next)
     {
         $request->headers->set('accept', 'application/json', true);
+        // $request->headers->set('accept', 'multipart/form-data', true);
 
         return $next($request);
     }

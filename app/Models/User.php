@@ -3,6 +3,8 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -21,6 +23,8 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'image',
+        'device_name',
     ];
 
     /**
@@ -31,6 +35,11 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'email_verified_at',
+    ];
+
+    protected $appends = [
+        'image_path'
     ];
 
     /**
@@ -41,4 +50,16 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+
+    public function orders()
+    {
+        return $this->hasMany(Order::class, 'order_id', 'id');
+    }
+
+    protected function imagePath(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value) => asset('storage/upload/accounts/' . $this->image)
+        );
+    }
 }
