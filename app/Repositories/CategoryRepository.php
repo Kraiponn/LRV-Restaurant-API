@@ -36,7 +36,14 @@ class CategoryRepository implements ICategoryRepository
             });
         }
 
-        return $query->paginate($filter['pageSize']);
+        $categories = $query->paginate($filter['pageSize']);
+
+        // dd($categories['data']);
+        // if ($categories->total <= 1) {
+        //     throw new Exception('Category Not Found', 404);
+        // }
+
+        return $categories;
     }
 
     /*
@@ -91,8 +98,8 @@ class CategoryRepository implements ICategoryRepository
             throw new Exception('Category not found', 404);
         }
 
-        $category->title = $dto['title'];
-        $category->description = $dto['description'];
+        $category->title = $dto['title'] ?? $category['title'];
+        $category->description = $dto['description'] ?? $category['description'];
         $category->save();
 
         return $category;
@@ -107,15 +114,13 @@ class CategoryRepository implements ICategoryRepository
     */
     public function delete($id): ?Category
     {
-        $category = Category::where('id', $id);
+        $category = Category::where('id', $id)->delete();
 
         if (!$category) {
             throw new Exception('Category not found', 404);
         }
 
-        $category->delete();
-
-        return $category;
+        return null;
     }
 
 

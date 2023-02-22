@@ -7,6 +7,7 @@ use App\Http\Requests\CreateCategoryRequest;
 use App\Http\Requests\UpdateCategoryRequest;
 use App\Repositories\CategoryRepository;
 use App\Traits\ResponseTrait;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -23,7 +24,7 @@ class CategoryController extends Controller
     |   @route      GET, api/categories
     |   @access     Public - (all role)
      ***********************************************************************************/
-    public function getAccounts(): JsonResponse
+    public function getCategories(): JsonResponse
     {
         try {
             $data = $this->catRepository->findCateogries(request()->all());

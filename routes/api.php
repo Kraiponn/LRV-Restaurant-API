@@ -41,8 +41,8 @@ Route::middleware(['auth:sanctum', 'ability:admin'])->controller(AdminController
  *                   >>>>>>>     Category Modules     <<<<<<<
  ***************************************************************************************/
 Route::controller(CategoryController::class)->group(function () {
-    Route::get('/categories', 'findCateogries');
-    Route::get('/categories/{id}', 'findById');
+    Route::get('/categories', 'getCategories');
+    Route::get('/categories/{id}', 'getSingleCategory');
 });
 Route::middleware(['auth:sanctum', 'ability:manager,admin'])->controller(CategoryController::class)->group(function () {
     Route::post('/categories', 'createCategory');
