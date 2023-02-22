@@ -9,6 +9,17 @@ class Category extends Model
 {
     use HasFactory;
 
+    protected $fillable = [
+        'title',
+        'description',
+    ];
+
+    protected $hidden = [
+        //
+    ];
+
+    protected $appends = [];
+
     /*
         One-to-Many [Category to Products]
     */

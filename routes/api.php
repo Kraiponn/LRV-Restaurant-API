@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\API\Auth\AdminController;
 use App\Http\Controllers\API\Auth\UserController;
+use App\Http\Controllers\API\CategoryController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -34,4 +35,17 @@ Route::middleware(['auth:sanctum', 'ability:admin'])->controller(AdminController
     Route::get('/auth/admin/users/{id}', 'getSingleAccount');
     Route::put('/auth/admin/users/{id}/update-password', 'updatePassword');
     Route::put('/auth/admin/users/{id}/update-role', 'updateRole');
+});
+
+/****************************************************************************************
+ *                   >>>>>>>     Category Modules     <<<<<<<
+ ***************************************************************************************/
+Route::controller(CategoryController::class)->group(function () {
+    Route::get('/categories', 'findCateogries');
+    Route::get('/categories/{id}', 'findById');
+});
+Route::middleware(['auth:sanctum', 'ability:manager,admin'])->controller(CategoryController::class)->group(function () {
+    Route::post('/categories', 'createCategory');
+    Route::put('/categories/{id}', 'updateCategory');
+    Route::delete('/categories/{id}', 'deleteCategory');
 });
