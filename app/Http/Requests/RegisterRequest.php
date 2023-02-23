@@ -25,6 +25,8 @@ class RegisterRequest extends ValidationFormRequestAPI
     {
         return [
             'name' => 'required',
+            'first_name' => 'required|string|max:100',
+            'last_name' => 'required|string|max:100',
             'email' => 'required|email|unique:users,email',
             // 'password' => 'required|min:5|max:16|confirmed',
             'password' => 'required|min:5|max:16',

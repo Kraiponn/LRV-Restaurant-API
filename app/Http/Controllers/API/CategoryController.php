@@ -27,7 +27,7 @@ class CategoryController extends Controller
     public function getCategories(): JsonResponse
     {
         try {
-            $data = $this->catRepository->findCateogries(request()->all());
+            $data = $this->catRepository->findAll(request()->all());
 
             return $this->responseSuccess($data);
         } catch (Exception $ex) {
@@ -100,7 +100,7 @@ class CategoryController extends Controller
     |   @route      DELETE, api/categories/{id}
     |   @access     Private - (Admin & Manager Role)
      ***********************************************************************************/
-    public function deleteCategory($id, Request $request): JsonResponse
+    public function deleteCategory($id): JsonResponse
     {
         try {
             $data = $this->catRepository->delete($id);

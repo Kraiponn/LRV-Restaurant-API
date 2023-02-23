@@ -3,6 +3,7 @@
 use App\Http\Controllers\API\Auth\AdminController;
 use App\Http\Controllers\API\Auth\UserController;
 use App\Http\Controllers\API\CategoryController;
+use App\Http\Controllers\API\ProductController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -23,6 +24,7 @@ Route::controller(UserController::class)->group(function () {
     Route::post('/auth/register', 'register');
     Route::post('/auth/login', 'login');
 });
+
 Route::middleware(['auth:sanctum', 'ability:member,manager,admin'])->controller(UserController::class)->group(function () {
     Route::get('/auth/account', 'account');
     Route::post('/auth/logout', 'logout');
@@ -30,6 +32,7 @@ Route::middleware(['auth:sanctum', 'ability:member,manager,admin'])->controller(
     Route::put('/auth/update-password', 'updatePassword');
     Route::delete('/auth/remove-account', 'removeAccount');
 });
+
 Route::middleware(['auth:sanctum', 'ability:admin'])->controller(AdminController::class)->group(function () {
     Route::get('/auth/admin/users', 'getAccounts');
     Route::get('/auth/admin/users/{id}', 'getSingleAccount');
@@ -44,8 +47,23 @@ Route::controller(CategoryController::class)->group(function () {
     Route::get('/categories', 'getCategories');
     Route::get('/categories/{id}', 'getSingleCategory');
 });
+
 Route::middleware(['auth:sanctum', 'ability:manager,admin'])->controller(CategoryController::class)->group(function () {
     Route::post('/categories', 'createCategory');
     Route::put('/categories/{id}', 'updateCategory');
     Route::delete('/categories/{id}', 'deleteCategory');
+});
+
+/****************************************************************************************
+ *                    >>>>>>>     Product Modules     <<<<<<<                           *
+ ***************************************************************************************/
+Route::controller(ProductController::class)->group(function () {
+    Route::get('/products', 'getProducts');
+    Route::get('/products/{id}', 'getSingleProduct');
+});
+
+Route::middleware(['auth:sanctum', 'ability:manager,admin'])->controller(ProductController::class)->group(function () {
+    Route::post('/products', 'createProduct');
+    Route::post('/products/{id}', 'updateProduct');
+    Route::delete('/products/{id}', 'deleteProduct');
 });

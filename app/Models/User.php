@@ -21,6 +21,8 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
+        'first_name',
+        'last_name',
         'email',
         'password',
         'image',
@@ -39,7 +41,8 @@ class User extends Authenticatable
     ];
 
     protected $appends = [
-        'image_path'
+        'image_path',
+        'full_name',
     ];
 
     /**
@@ -51,15 +54,27 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
     ];
 
-    public function orders()
-    {
-        return $this->hasMany(Order::class, 'order_id', 'id');
-    }
-
     protected function imagePath(): Attribute
     {
         return Attribute::make(
             get: fn ($value) => asset('storage/upload/accounts/' . $this->image)
         );
+    }
+
+    protected function fullName(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value) => $this->first_name . ' ' . $this->last_name
+        );
+    }
+
+    /*
+    |------------------------------------------------------------------------------------
+    |   Virsual table
+    |------------------------------------------------------------------------------------
+     */
+    public function orders()
+    {
+        return $this->hasMany(Order::class, 'order_id', 'id');
     }
 }

@@ -2,12 +2,12 @@
 
 namespace App\Repositories;
 
-use App\Interfaces\ICategoryRepository;
+use App\Interfaces\ICrudRepository;
 use App\Models\Category;
 use Exception;
 use Illuminate\Contracts\Pagination\Paginator;
 
-class CategoryRepository implements ICategoryRepository
+class CategoryRepository implements ICrudRepository
 {
     /*
     |------------------------------------------------------
@@ -22,7 +22,7 @@ class CategoryRepository implements ICategoryRepository
     |   @Return      Paginator
     |------------------------------------------------------
     */
-    public function findCateogries(array $filters): Paginator
+    public function findAll(array $filters): Paginator
     {
         $filter = $this->getFilterData($filters);
 

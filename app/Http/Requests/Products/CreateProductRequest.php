@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\Products;
 
 // use Illuminate\Foundation\Http\FormRequest;
 use App\Http\Requests\ValidationFormRequestAPI;
 
-class UpdateAccountRequest extends ValidationFormRequestAPI
+class CreateProductRequest extends ValidationFormRequestAPI
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -25,12 +25,13 @@ class UpdateAccountRequest extends ValidationFormRequestAPI
     public function rules()
     {
         return [
-            'name' => 'nullable|string',
-            'first_name' => 'nullable|required|string|max:100',
-            'last_name' => 'nullable|required|string|max:100',
-            'email' => 'nullable|email',
-            'image' => 'nullable|image|mimes:png,jpg,jpeg|max:2048',
-            'device_name' => 'required'
+            'title' => 'required|max:100',
+            'description' => 'nullable|max:498',
+            'unit_price' => 'required|numeric',
+            'in_stock' => 'required|numeric',
+            'image' => 'required',
+            'image.*' => 'image|mimes:png,jpg,jpeg,svg|max:2048',
+            'category_id' => 'required|numeric'
         ];
     }
 }

@@ -3,6 +3,8 @@
 namespace App\Http\Requests;
 
 use App\Http\Requests\ValidationFormRequestAPI;
+use Illuminate\Validation\Rule;
+
 // use Illuminate\Foundation\Http\FormRequest;
 
 class EditRoleRequest extends ValidationFormRequestAPI
@@ -25,7 +27,10 @@ class EditRoleRequest extends ValidationFormRequestAPI
     public function rules()
     {
         return [
-            'role_type' => 'required'
+            'role_type' => [
+                'required',
+                Rule::in(['guest', 'member', 'manager', 'admin'])
+            ]
         ];
     }
 }
