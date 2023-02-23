@@ -3,14 +3,13 @@
 namespace App\Http\Controllers\API\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\EditPasswordRequest;
-use App\Http\Requests\EditRoleRequest;
-use App\Http\Requests\UpdateRoleRequest;
+use App\Http\Requests\Auth\EditPasswordRequest;
+use App\Http\Requests\Auth\EditRoleRequest;
 use App\Repositories\AuthRepository;
 use App\Traits\ResponseTrait;
 use Exception;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class AdminController extends Controller
 {
@@ -66,10 +65,13 @@ class AdminController extends Controller
     public function updatePassword($id, EditPasswordRequest $request): JsonResponse
     {
         try {
+            DB::beginTransaction();
             $data = $this->authRepository->editPassword($id, $request->all());
 
             return $this->responseSuccess($data);
         } catch (Exception $ex) {
+            DB::rollBack();
+
             return $this->responseError(
                 is_array($ex->getMessage()) ? $ex->getMessage() : [$ex->getMessage()],
                 $ex->getCode()
@@ -82,13 +84,16 @@ class AdminController extends Controller
         @route      PUT, api/auth/admin/users/{id}/update-role
         @access     Private - (Admin role)
      ***********************************************************************************/
-    public function updateRole($id, EditRoleRequest $request): JsonResponse
+    public function updateRole($id, EditRoleRequest  $request): JsonResponse
     {
         try {
+            DB::beginTransaction();
             $data = $this->authRepository->editRole($id, $request->all());
 
             return $this->responseSuccess($data);
         } catch (Exception $ex) {
+            DB::rollBack();
+
             return $this->responseError(
                 is_array($ex->getMessage()) ? $ex->getMessage() : [$ex->getMessage()],
                 $ex->getCode()

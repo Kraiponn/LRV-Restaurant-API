@@ -42,7 +42,6 @@ class AuthRepository implements IAuthRepository
     */
     public function register(array $dto): array
     {
-        DB::beginTransaction();
         $registerFields = $this->fieldsToRegister($dto);
         $result = User::create($registerFields);
 
@@ -182,6 +181,7 @@ class AuthRepository implements IAuthRepository
 
         $user->delete();
 
+        DB::commit();
         return ['result' => $user];
     }
 
@@ -252,6 +252,7 @@ class AuthRepository implements IAuthRepository
         $user->password = Hash::make($dto['password']);
         $user->save();
 
+        DB::commit();
         return $user;
     }
 
@@ -274,6 +275,7 @@ class AuthRepository implements IAuthRepository
         $user->role_type = $dto['role_type'];
         $user->save();
 
+        DB::commit();
         return $user;
     }
 

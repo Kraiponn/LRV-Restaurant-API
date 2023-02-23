@@ -48,6 +48,7 @@ class UserController extends Controller
     public function register(RegisterRequest $request)
     {
         try {
+            DB::beginTransaction();
             $data = $this->authRepository->register($request->all());
 
             return $this->responseSuccess($data, 201, 'User registerd successfully.');
@@ -110,7 +111,6 @@ class UserController extends Controller
             DB::beginTransaction();
             $data = $this->authRepository->updateAccount($request->all());
 
-            DB::commit();
             return $this->responseSuccess($data, 200, 'Account updated successfully.');
         } catch (Exception $ex) {
             DB::rollBack();
@@ -130,10 +130,13 @@ class UserController extends Controller
     public function updatePassword(UpdatePasswordRequest $request)
     {
         try {
+            DB::beginTransaction();
             $data = $this->authRepository->updatePassword($request->all());
 
             return $this->responseSuccess($data, 200, 'Password updated successfully.');
         } catch (Exception $ex) {
+            DB::rollBack();
+
             return $this->responseError(
                 is_array($ex->getMessage()) ? $ex->getMessage() : [$ex->getMessage()],
                 $ex->getCode()
@@ -152,7 +155,6 @@ class UserController extends Controller
             DB::beginTransaction();
             $data = $this->authRepository->removeAccount();
 
-            DB::commit();
             return $this->responseSuccess($data, 200, 'Account removed successfully.');
         } catch (Exception $ex) {
             DB::rollBack();
