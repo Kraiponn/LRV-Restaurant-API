@@ -75,6 +75,23 @@ class User extends Authenticatable
      */
     public function orders()
     {
-        return $this->hasMany(Order::class, 'order_id', 'id');
+        return $this->hasMany(
+            \App\Models\Order::class,
+            'user_id',
+            'id'
+        );
+    }
+
+    /*
+        Many-to-Many [Users to Products] => Carts
+    */
+    public function products()
+    {
+        return $this->belongsToMany(
+            \App\Models\Product::class,
+            'product_users',
+            'user_id',
+            'product_id',
+        );
     }
 }

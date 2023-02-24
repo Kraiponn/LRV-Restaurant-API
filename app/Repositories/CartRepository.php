@@ -11,7 +11,7 @@ use Illuminate\Contracts\Pagination\Paginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
-class ProductRepository implements ICrudRepository
+class CartRepository implements ICrudRepository
 {
     /*
     |------------------------------------------------------
@@ -48,8 +48,7 @@ class ProductRepository implements ICrudRepository
         // $query->with(['productImages' => function ($query) {
         //     $query->select(['id', 'image'])->orderBy('id', 'desc');
         // }]);
-        $query->with(['imageProducts']);
-        // $query->product_images;
+        $query->with(['productImages']);
 
         $products = $query->paginate($filter['pageSize']);
 

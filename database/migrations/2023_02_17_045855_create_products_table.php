@@ -20,14 +20,17 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->decimal('unit_price', 10, 2)->default(0);
             $table->unsignedBigInteger('in_stock')->default(0);
-            $table->unsignedBigInteger('category_id');
             $table->index('title');
             $table->index('slug');
-            $table->foreign('category_id')
+
+            $table->unsignedBigInteger('category_id');
+            $table
+                ->foreign('category_id')
                 ->references('id')
                 ->on('categories')
                 ->onDelete('cascade')
                 ->onUpdate('cascade');
+
             $table->timestamps();
         });
     }

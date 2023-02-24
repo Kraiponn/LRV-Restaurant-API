@@ -14,17 +14,17 @@ class Order extends Model
     */
     public function user()
     {
-        return $this->belongsTo(User::class, 'order_id', 'id');
+        return $this->belongsTo(User::class, 'user_id', 'id');
     }
 
     /*
-        Many-to-Many [Orders to Products]
+        Many-to-Many [Orders to Products] => Cart
     */
-    public function orderDetails()
+    public function orderProducts()
     {
         return $this->belongsToMany(
-            Product::class,
-            'order_details',
+            \App\Models\Product::class,
+            'order_products',
             'order_id',
             'product_id'
         );

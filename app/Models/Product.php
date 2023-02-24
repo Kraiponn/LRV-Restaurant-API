@@ -5,9 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\ProductImage;
-use App\Models\Category;
-use App\Models\Order;
 
 class Product extends Model
 {
@@ -25,7 +22,7 @@ class Product extends Model
     ];
 
     protected $appends = [
-        'image_path',
+        // 'image_path',
     ];
 
     // Accessors(getter)
@@ -41,38 +38,38 @@ class Product extends Model
     */
     public function category()
     {
-        return $this->belongsTo(Category::class, 'product_id', 'id');
+        return $this->belongsTo(\App\Models\Category::class, 'category_id', 'id');
     }
 
     /*
         One-to-Many [Product to ProductImages]
     */
-    public function productImages()
+    public function imageProducts()
     {
-        return $this->hasMany(ProductImage::class);
+        return $this->hasMany(\App\Models\ImageProduct::class, 'product_id', 'id');
     }
 
     /*
-        Many-to-Many [Products to Orders]
+        Many-to-Many [Products to Orders] => Order details
     */
-    public function orderDetails()
+    public function orderProducts()
     {
         return $this->belongsToMany(
-            Order::class,
-            'order_details',
+            \App\Models\Order::class,
+            'order_products',
             'product_id',
             'order_id'
         );
     }
 
     /*
-        Many-to-Many [Products to Users]
+        Many-to-Many [Products to Users] => Cart
     */
-    public function carts()
+    public function users()
     {
         return $this->belongsToMany(
-            User::class,
-            'carts',
+            \App\Models\User::class,
+            'product_users',
             'product_id',
             'user_id'
         );
