@@ -38,6 +38,8 @@ class User extends Authenticatable
         'password',
         'remember_token',
         'email_verified_at',
+        'created_at',
+        'updated_at',
     ];
 
     protected $appends = [
@@ -83,7 +85,7 @@ class User extends Authenticatable
     }
 
     /*
-        Many-to-Many [Users to Products] => Carts
+        Many-to-Many [The Users That Belong To This Products] => product_users
     */
     public function products()
     {
@@ -92,6 +94,8 @@ class User extends Authenticatable
             'product_users',
             'user_id',
             'product_id',
-        );
+        )
+            ->withTimestamps('created_at', 'updated_at')
+            ->withPivot('quantity');
     }
 }

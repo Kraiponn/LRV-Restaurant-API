@@ -18,6 +18,7 @@ return new class extends Migration
             $table->unsignedBigInteger('user_id');
             $table->dateTime('order_date')->default(now());
             $table->dateTime('shipping_date')->default(now());
+            $table->unsignedInteger('table_no');
             $table->enum('location', ['restaurant', 'home'])->default('restaurant');
             $table->enum('status', ['pending', 'prepare', 'shipping', 'finish'])->default('pending');
             $table

@@ -21,17 +21,16 @@ class Product extends Model
         'category_id',
     ];
 
+    // Appends fields for resposne
     protected $appends = [
         // 'image_path',
     ];
 
-    // Accessors(getter)
-    protected function imagePath(): Attribute
-    {
-        return Attribute::make(
-            get: fn ($value) => asset('/storage/upload/products/')
-        );
-    }
+    // Hidden response fields
+    protected $hidden = [
+        'created_at',
+        'updated_at',
+    ];
 
     /*
         Many-to-One [Products to Category] Reverse

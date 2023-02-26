@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests\Products;
+namespace App\Http\Requests\Cart;
 
 // use Illuminate\Foundation\Http\FormRequest;
 use App\Http\Requests\ValidationFormRequestAPI;
@@ -25,7 +25,6 @@ class CreateCartRequest extends ValidationFormRequestAPI
     public function rules()
     {
         return [
-            'user_id' => 'required|numeric',
             'product_id' => 'required|numeric',
             'quantity' => 'required|numeric'
         ];

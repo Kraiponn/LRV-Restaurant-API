@@ -2,175 +2,185 @@
 
 namespace App\Repositories;
 
-use App\Interfaces\ICrudRepository;
-use App\Models\Product;
-use App\Models\ProductImage;
-use Illuminate\Support\Str;
+use App\Models\ProductUser;
+use App\Models\User;
 use Exception;
 use Illuminate\Contracts\Pagination\Paginator;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 
-class CartRepository implements ICrudRepository
+class CartRepository
 {
     /*
     |------------------------------------------------------
-    |   Fetch products with pagination
+    |   Fetch products on your cart with pagination
     |
-    |   @Query      searchKey(title,slug field)
-    |   @Query      page
-    |   @Query      pageSize
-    |   @Query      orderBy
-    |   @Query      order(asc, desc)
+        @Param      int                 user_id
+    |   @Query      page                default = 1
+    |   @Query      pageSize            default = 10
+    |   @Query      orderBy             default = id
+    |   @Query      order(asc, desc)    default = desc
     |
     |   @Return      Paginator
     |------------------------------------------------------
     */
-    public function findAll(array $filters): Paginator
+    public function findProductsOnCart($uId, array $filters): Paginator
     {
         $filter = $this->getFilterData($filters);
 
-        // $query = Product::with(['productImages' => function ($query) {
-        //     $query->select(['image'])->orderBy();
-        // }])
-        $query = Product::orderBy($filter['orderBy'], $filter['order']);
+        // $query = User::find($uId);
+        $query = User::where('id', $uId);
 
-        if (!empty($filter['searchKey'])) {
-            $query = $query->where(function ($query) use ($filter) {
-                $searched = '%' . $filter['searchKey'] . '%';
+        // Query Relation
+        $query = $query->with('products');      // Using with User::where
+        // $query = $query->products();         // Using with User::find
 
-                $query->where('title', 'like', $searched)
-                    ->orWhere('slug', 'like', $searched);
-            });
-        }
+        // Order By ? ?
+        $query = $query->orderBy($filter['orderBy'], $filter['order']);
 
-        // Query relate
-        // $query->with(['productImages' => function ($query) {
-        //     $query->select(['id', 'image'])->orderBy('id', 'desc');
-        // }]);
-        $query->with(['productImages']);
-
-        $products = $query->paginate($filter['pageSize']);
-
-        // dd($products['data']);
-        // if ($products->total <= 1) {
-        //     throw new Exception('Product Not Found', 404);
-        // }
-
-        return $products;
+        return $query->paginate($filter['pageSize']);
     }
 
     /*
     |------------------------------------------------------
-    |   Fetch a single product
-    |   @Param      int
-    |   @Return     Product | null
-    |------------------------------------------------------
-    */
-    public function findById($id): ?Product
-    {
-        $product = Product::where('id', $id)->with(['productImages' => function ($query) {
-            $query->orderBy('id', 'desc');
-        }])->first();
-
-        if (!$product) {
-            throw new Exception('Product not found', 404);
-        }
-
-        // dd($product);
-        return $product;
-    }
-
-    /*
-    |------------------------------------------------------
-    |   Create new product
+    |   Add product to cart
     |   @Param      array
-    |   @Return     Product | null
+    |   @Param      int
+    |   @Return     array
     |------------------------------------------------------
     */
-    public function create(array $dto): ?Product
+    public function add(array $dto, $uId): array
     {
-        $product = Product::create($this->getFieldToCreate($dto));
+        $isProductActive = ProductUser::where('user_id', $uId)
+            ->where('product_id', $dto['product_id'])
+            ->first();
 
-        if (!$product) {
-            throw new Exception('Sorry, product created not success. Please try again.', 500);
+        // This product active on cart
+        if ($isProductActive) {
+            // Update product quantity on cart
+            $isProductActive['quantity'] = $isProductActive['quantity'] + $dto['quantity'];
+            // Save
+            $isProductActive->save();
+
+            DB::commit();
+            return $this->getResponse(
+                $isProductActive['id'],
+                $uId,
+                $dto['product_id'],
+                $isProductActive['quantity']
+            );
         }
 
-        // Store new images to storage and db
-        $this->storeMultipleImages($dto['image'], $product['id']);
+        $user = User::find($uId);
+        if (!$user) {
+            throw new Exception('User Not Found', 404);
+        }
+
+        $pId = $dto['product_id'];
+        $quantity = $dto['quantity'];
+
+        $result = ProductUser::create([
+            'user_id' => $uId,
+            'product_id' => $pId,
+            'quantity' => $quantity
+        ]);
 
         DB::commit();
-        return $product;
+        return $this->getResponse(
+            'hello',
+            $result['id'],
+            $uId,
+            $result['product_id'],
+            $result['quantity']
+        );
     }
 
     /*
     |------------------------------------------------------
-    |   Update product by id
-    |   @Param      int
+    |   Increase product to cart
     |   @Param      array
-    |   @Return     Product | null
+    |   @Param      int
+    |   @Return     Array
     |------------------------------------------------------
     */
-    public function update($id, array $dto): ?Product
+    public function increase(array $dto, $uId): array
     {
-        $product = Product::find($id);
+        $pId = $dto['product_id'];
+        $quantity = $dto['quantity'];
 
-        if (!$product) {
-            throw new Exception('Product not found', 404);
+        $cart = ProductUser::where('user_id', $uId)->where('product_id', $pId)->first();
+
+        if (!$cart) {
+            throw new Exception('Product not found on cart', 404);
         }
 
-        $product['title'] = $dto['title'] ?? $product['title'];
-        $product['slug'] = $dto['title'] ? Str::slug($dto['title'], '-') : $product['slug'];
-        $product['description'] = $dto['description'] ?? $product['description'];
-        $product['unit_price'] = $dto['unit_price'] ?? $product['unit_price'];
-        $product['in_stock'] = $dto['in_stock'] ?? $product['in_stock'];
-        $product['category_id'] = $dto['category_id'] ?? $product['category_id'];
-        $product->save();
-
-        if (!empty($dto['image'])) {
-            // Get old product images
-            $oldProdImgs = ProductImage::where('product_id', $id)->get();
-
-            // Remove old product image from db
-            ProductImage::where('product_id', $id)->delete();
-
-            // Remove images from storage
-            if (count($oldProdImgs) > 0) {
-                $this->removeMultipleImages($oldProdImgs);
-            }
-
-            // Store new images to storage and db
-            $this->storeMultipleImages($dto['image'], $id);
-        }
+        // Update product quantity on cart
+        $cart->quantity = $cart['quantity'] + $quantity;
+        // Save
+        $cart->save();
 
         DB::commit();
-        return $product;
+        return $this->getResponse(
+            $cart['id'],
+            $uId,
+            $cart['product_id'],
+            $cart['quantity']
+        );
     }
 
     /*
     |------------------------------------------------------
-    |   Delete product by Id
+    |   Decrement product from cart
+    |   @Param      array
     |   @Param      int
-    |   @Return     Product | null
+    |   @Return     Array
     |------------------------------------------------------
     */
-    public function delete($id): ?Product
+    public function decrease(array $dto, $uId): array
     {
-        $product = Product::with('images')->where('id', $id)->first();
+        $pId = $dto['product_id'];
+        $quantity = $dto['quantity'];
 
-        if (!$product) {
+        $cart = ProductUser::where('user_id', $uId)->where('product_id', $pId)->first();
+
+        if (!$cart) {
             throw new Exception('Product not found', 404);
         }
 
-        // Remove product
-        Product::where('id', $id)->delete();
+        if ($cart['quantity'] > 1) {
+            // Update product quantity on cart
+            $cart->quantity = $cart['quantity'] - $quantity;
+            // Save
+            $cart->save();
 
-        if (count($product->images) > 0) {
-            $this->removeMultipleImages($product->images);
+            $quantity = $cart['quantity'];
+        } else {
+            ProductUser::where('id', $cart->id)->delete();
+            $quantity = 0;
         }
 
         DB::commit();
-        return $product;
+        return $this->getResponse($cart['id'], $uId, $pId, $quantity);
+    }
+
+    /*
+    |------------------------------------------------------
+    |   Destroy product from cart by id of product_users
+    |   @Param      int
+    |   @Return     array
+    |------------------------------------------------------
+    */
+    public function destroy($cId, $pId)
+    {
+        $uId = Auth::user()->id;
+
+        if (!ProductUser::where('id', $cId)->delete()) {
+            throw new Exception('Product not found for delete', 404);
+        }
+
+        DB::commit();
+
+        return $this->getResponse($cId, $uId, $pId, 0);
     }
 
 
@@ -190,7 +200,6 @@ class CartRepository implements ICrudRepository
         $defaultValues = [
             'orderBy' => 'id',
             'order' => 'desc',
-            'searchKey' => '',
             'page' => 1,
             'pageSize' => 10
         ];
@@ -200,63 +209,21 @@ class CartRepository implements ICrudRepository
 
     /*
     |------------------------------------------------------
-    |   Generate fields for created product.
-    |   @Param      array
+    |   Generate response for decrease method
+    |   @Param      int
+    |   @Param      int
+    |   @Param      int
+    |   @Param      int
     |   @Return     array
     |------------------------------------------------------
     */
-    private function getFieldToCreate(array $dto): array
+    private function getResponse($id, $uId, $pId, $quantity): array
     {
         return [
-            'title' => $dto['title'],
-            'slug' => Str::slug($dto['title'], '-'),
-            'description' => $dto['description'],
-            'unit_price' => $dto['unit_price'],
-            'in_stock' => $dto['in_stock'],
-            'category_id' => $dto['category_id'],
+            'id' => $id,
+            'user_id' => $uId,
+            'product_id' => $pId,
+            'quantity' => $quantity,
         ];
-    }
-
-    /*
-    |------------------------------------------------------
-    |   Store new multi-images to storage & Db
-    |   @Param      array
-    |   @Param      int
-    |   @Return     void
-    |------------------------------------------------------
-    */
-    private function storeMultipleImages(array $images, int $productId = 1): void
-    {
-        // Loop to store new images and store data to ProductImages table
-        foreach ($images as $file) {
-            $fileExtension = $file->getClientOriginalExtension();
-            $fileName = uniqid() . '-' . time() . '.' . $fileExtension;
-
-            // Store image
-            Storage::disk('public')->put('upload/products/' . $fileName, file_get_contents($file));
-
-            // Store image name to db
-            $picture = new ProductImage();
-            $picture->product_id = $productId;
-            $picture->image = $fileName;
-            $picture->save();
-        }
-    }
-
-    /*
-    |------------------------------------------------------
-    |   Remove multi-images from storage
-    |   @Param      array
-    |   @Return     void
-    |------------------------------------------------------
-    */
-    private function removeMultipleImages(object $images)
-    {
-        // Loop for remove old images from storage
-        for ($i = 0; $i < count($images); $i++) {
-            Storage::disk('public')->delete(
-                './upload/products/' . $images[$i]->image
-            );
-        }
     }
 }

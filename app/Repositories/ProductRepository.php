@@ -3,8 +3,8 @@
 namespace App\Repositories;
 
 use App\Interfaces\ICrudRepository;
+use App\Models\ImageProduct;
 use App\Models\Product;
-use App\Models\ProductImage;
 use Illuminate\Support\Str;
 use Exception;
 use Illuminate\Contracts\Pagination\Paginator;
@@ -30,10 +30,9 @@ class ProductRepository implements ICrudRepository
     {
         $filter = $this->getFilterData($filters);
 
-        // $query = Product::with(['productImages' => function ($query) {
-        //     $query->select(['image'])->orderBy();
-        // }])
-        $query = Product::orderBy($filter['orderBy'], $filter['order']);
+        $query = Product::with(['imageProducts']);
+
+        $query = $query->orderBy($filter['orderBy'], $filter['order']);
 
         if (!empty($filter['searchKey'])) {
             $query = $query->where(function ($query) use ($filter) {
@@ -44,19 +43,8 @@ class ProductRepository implements ICrudRepository
             });
         }
 
-        // Query relate
-        // $query->with(['productImages' => function ($query) {
-        //     $query->select(['id', 'image'])->orderBy('id', 'desc');
-        // }]);
-        $query->with(['imageProducts']);
-        // $query->product_images;
-
+        // $totalBlance = $query->sum('unit_price');
         $products = $query->paginate($filter['pageSize']);
-
-        // dd($products['data']);
-        // if ($products->total <= 1) {
-        //     throw new Exception('Product Not Found', 404);
-        // }
 
         return $products;
     }
@@ -70,7 +58,7 @@ class ProductRepository implements ICrudRepository
     */
     public function findById($id): ?Product
     {
-        $product = Product::where('id', $id)->with(['productImages' => function ($query) {
+        $product = Product::where('id', $id)->with(['imageProducts' => function ($query) {
             $query->orderBy('id', 'desc');
         }])->first();
 
@@ -78,7 +66,6 @@ class ProductRepository implements ICrudRepository
             throw new Exception('Product not found', 404);
         }
 
-        // dd($product);
         return $product;
     }
 
@@ -129,11 +116,11 @@ class ProductRepository implements ICrudRepository
         $product->save();
 
         if (!empty($dto['image'])) {
-            // Get old product images
-            $oldProdImgs = ProductImage::where('product_id', $id)->get();
+            // Get the current imageProduct
+            $oldProdImgs = ImageProduct::where('product_id', $id)->get();
 
-            // Remove old product image from db
-            ProductImage::where('product_id', $id)->delete();
+            // Remove old image from db
+            ImageProduct::where('product_id', $id)->delete();
 
             // Remove images from storage
             if (count($oldProdImgs) > 0) {
@@ -157,7 +144,7 @@ class ProductRepository implements ICrudRepository
     */
     public function delete($id): ?Product
     {
-        $product = Product::with('images')->where('id', $id)->first();
+        $product = Product::with('imageProducts')->where('id', $id)->first();
 
         if (!$product) {
             throw new Exception('Product not found', 404);
@@ -166,8 +153,8 @@ class ProductRepository implements ICrudRepository
         // Remove product
         Product::where('id', $id)->delete();
 
-        if (count($product->images) > 0) {
-            $this->removeMultipleImages($product->images);
+        if (count($product->imageProducts) > 0) {
+            $this->removeMultipleImages($product->imageProducts);
         }
 
         DB::commit();
@@ -237,7 +224,7 @@ class ProductRepository implements ICrudRepository
             Storage::disk('public')->put('upload/products/' . $fileName, file_get_contents($file));
 
             // Store image name to db
-            $picture = new ProductImage();
+            $picture = new ImageProduct();
             $picture->product_id = $productId;
             $picture->image = $fileName;
             $picture->save();

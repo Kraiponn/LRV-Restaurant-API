@@ -1,11 +1,12 @@
 <?php
 
-namespace App\Http\Requests\Auth;
+namespace App\Http\Requests\Orders;
 
 // use Illuminate\Foundation\Http\FormRequest;
 use App\Http\Requests\ValidationFormRequestAPI;
+use Illuminate\Validation\Rule;
 
-class LoginRequest extends ValidationFormRequestAPI
+class CreateOrderRequest extends ValidationFormRequestAPI
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -25,9 +26,14 @@ class LoginRequest extends ValidationFormRequestAPI
     public function rules()
     {
         return [
-            'email' => 'required|email|exists:users,email',
-            'password' => 'required|min:5|max:16',
-            'device_name' => 'required'
+            'order_date' => 'required|date',
+            'shipping_date' => 'required|date',
+            'table_no' => 'required|numeric',
+            'location' =>  [
+                'required',
+                Rule::in(['home', 'restaurant'])
+            ],
+            'products' => 'required|array'
         ];
     }
 }

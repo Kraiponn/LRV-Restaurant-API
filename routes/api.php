@@ -4,6 +4,8 @@ use App\Http\Controllers\API\Auth\AdminController;
 use App\Http\Controllers\API\Auth\UserController;
 use App\Http\Controllers\API\CategoryController;
 use App\Http\Controllers\API\ProductController;
+use App\Http\Controllers\API\CartController;
+use App\Http\Controllers\API\OrderController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -66,4 +68,29 @@ Route::middleware(['auth:sanctum', 'ability:manager,admin'])->controller(Product
     Route::post('/products', 'createProduct');
     Route::post('/products/{id}', 'updateProduct');
     Route::delete('/products/{id}', 'deleteProduct');
+});
+
+/****************************************************************************************
+ *                        -----     Cart Modules     -----
+ ***************************************************************************************/
+Route::middleware(['auth:sanctum', 'ability:member,manager,admin'])->controller(CartController::class)->group(function () {
+    Route::post('/cart/products/add', 'add');
+    Route::post('/cart/products/increment', 'increaseProductsToCart');
+    Route::post('/cart/products/decrement', 'decreaseProductsFromCart');
+    Route::delete('/cart/{cId}/products/{pId}', 'destroyProducts');
+    Route::get('/cart/products', 'getCart');
+});
+
+/****************************************************************************************
+ *                        -----     Order Modules     -----
+ ***************************************************************************************/
+Route::middleware(['auth:sanctum', 'ability:member,manager,admin'])->controller(OrderController::class)->group(function () {
+    Route::post('/orders', 'createOrder');
+    Route::delete('/orders/{oId}', 'deleteOrder');
+    Route::get('/orders/{oId}', 'getSingleOrder');
+    Route::get('/orders', 'getOrders');
+});
+
+Route::middleware(['auth:sanctum', 'ability:manager,admin'])->controller(OrderController::class)->group(function () {
+    Route::put('/orders/{oId}', 'updateOrder');
 });

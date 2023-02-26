@@ -279,6 +279,74 @@ class AuthRepository implements IAuthRepository
         return $user;
     }
 
+    /*
+    |------------------------------------------------------
+    |   Fetch products on your cart with pagination
+    |
+        @Param      int                 user_id
+    |   @Query      page                default = 1
+    |   @Query      pageSize            default = 10
+    |   @Query      orderBy             default = id
+    |   @Query      order(asc, desc)    default = desc
+    |
+    |   @Return      Paginator
+    |------------------------------------------------------
+    */
+    public function findProductsOnCart($uId, array $filters): Paginator
+    {
+        $filter = $this->getFilterData($filters);
+
+        $query = User::where('user_id', $uId);
+
+        $query = $query->with(['products' => function ($query) {
+            $query->sum('unit_price');
+        }]);
+
+        $query = $query->orderBy($filter['orderBy'], $filter['order']);
+
+        $products = $query->paginate($filter['pageSize']);
+
+        return $products;
+    }
+
+    /*
+    |------------------------------------------------------
+    |   Add product to cart
+    |   @Param      array
+    |   @Return     Product | null
+    |------------------------------------------------------
+    */
+    public function addProductToCart(array $dto, $uId): ?ProductUser
+    {
+        $user = User::find($uId);
+        if (!$user) {
+            throw new Exception('User Not Found', 404);
+        }
+
+        $cart = new ProductUser([
+            'user_id' => $user->id,
+            'product_id' => $dto['product_id'],
+            'quantity' => $dto['quantity']
+        ]);
+
+        $result = $user->products()->save($cart);
+
+        DB::commit();
+        return $result;
+    }
+
+    /*
+    |------------------------------------------------------
+    |   Delete product from cart by [user_id & product_id]
+    |   @Param      array
+    |   @Return     Product | null
+    |------------------------------------------------------
+    */
+    public function deleteProductFromCart(array $dto)
+    {
+        //
+    }
+
     //##################################################################################
     //                              Helper Functions
     //##################################################################################

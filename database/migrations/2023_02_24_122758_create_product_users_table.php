@@ -14,8 +14,10 @@ return new class extends Migration
     public function up()
     {
         Schema::create('product_users', function (Blueprint $table) {
-            $table->unsignedBigInteger('user_id')->index();
-            $table->unsignedBigInteger('product_id')->index();
+            $table->id();
+            $table->unsignedBigInteger('user_id');
+            $table->unsignedBigInteger('product_id');
+            $table->unsignedBigInteger('quantity')->default(1);
             $table
                 ->foreign('user_id')
                 ->references('id')
@@ -28,6 +30,7 @@ return new class extends Migration
                 ->on('products')
                 ->onDelete('cascade')
                 ->onUpdate('cascade');
+
             $table->timestamps();
         });
     }

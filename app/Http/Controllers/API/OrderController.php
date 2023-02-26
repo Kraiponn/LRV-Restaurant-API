@@ -3,34 +3,33 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Cart\CreateCartRequest;
-use App\Repositories\CartRepository;
+use App\Http\Requests\Orders\CreateOrderRequest;
+use App\Http\Requests\Orders\UpdateOrderRequest;
+use App\Repositories\OrderRepository;
 use App\Traits\ResponseTrait;
 use Exception;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 
-class CartController extends Controller
+class OrderController extends Controller
 {
     use ResponseTrait;
 
-    public function __construct(protected CartRepository $cartRepository)
+    public function __construct(protected OrderRepository $orderRepository)
     {
     }
 
     /************************************************************************************
-        @desc       Get products on cart
-        @route      GET, api/cart/products
-        @access     Private - (Owner account)
+    |   @Desc       Get orders
+    |   @Route      GET, api/orders
+    |   @Access     Public - (all role)
      ***********************************************************************************/
-    public function getCart(Request $request)
+    public function getOrders(): JsonResponse
     {
         try {
-            $uId = $request->user()->id;
-            $sfilter = $request->all();
+            $data = $this->orderRepository->findAll(request()->all());
 
-            return $this->responseSuccess($this->cartRepository->findProductsOnCart($uId, $sfilter));
+            return $this->responseSuccess($data);
         } catch (Exception $ex) {
             return $this->responseError(
                 is_array($ex->getMessage()) ? $ex->getMessage() : [$ex->getMessage()],
@@ -40,19 +39,36 @@ class CartController extends Controller
     }
 
     /************************************************************************************
-        @desc       Add new product to cart
-        @route      POST, api/cart/products/add
-        @access     Private - (Owner account)
+    |   @Desc       Get single order
+    |   @Route      GET, api/orders/{oId}
+    |   @Access     Public - (all role)
      ***********************************************************************************/
-    public function add(CreateCartRequest $request)
+    public function getSingleOrder($oId): JsonResponse
+    {
+        try {
+            $data = $this->orderRepository->findById($oId);
+
+            return $this->responseSuccess($data);
+        } catch (Exception $ex) {
+            return $this->responseError(
+                is_array($ex->getMessage()) ? $ex->getMessage() : [$ex->getMessage()],
+                $ex->getCode()
+            );
+        }
+    }
+
+    /************************************************************************************
+    |   @Desc       Created order
+    |   @Route      POST, api/orders
+    |   @Access     Private
+     ***********************************************************************************/
+    public function createOrder(CreateOrderRequest $request): JsonResponse
     {
         try {
             DB::beginTransaction();
+            $data = $this->orderRepository->create($request->all());
 
-            $uId = Auth::user()->id;
-            $data = $request->all();
-
-            return $this->responseSuccess($this->cartRepository->add($data, $uId));
+            return $this->responseSuccess($data, 201, 'Order created successfully.');
         } catch (Exception $ex) {
             DB::rollBack();
 
@@ -64,19 +80,17 @@ class CartController extends Controller
     }
 
     /************************************************************************************
-        @desc       Increase product to cart
-        @route      POST, api/cart/products/increment
-        @access     Private - (Owner account)
+    |   @Desc       Updated order by order id
+    |   @Route      PUT, api/orders/{id}
+    |   @Access     Private - (Only Admin or Manager Role)
      ***********************************************************************************/
-    public function increaseProductsToCart(CreateCartRequest $request)
+    public function updateOrder($oId, UpdateOrderRequest $request): JsonResponse
     {
         try {
             DB::beginTransaction();
+            $data = $this->orderRepository->update($oId, $request->all());
 
-            $uId = Auth::user()->id;
-            $data = $request->all();
-
-            return $this->responseSuccess($this->cartRepository->increase($data, $uId));
+            return $this->responseSuccess($data, 200, 'Order updated successfully.');
         } catch (Exception $ex) {
             DB::rollBack();
 
@@ -88,39 +102,20 @@ class CartController extends Controller
     }
 
     /************************************************************************************
-        @desc       Decrease product from cart
-        @route      POST, api/cart/products/decrement
-        @access     Private - (Owner account)
+    |   @Desc       Deleted order
+    |   @Route      DELETE, api/orders/{id}
+    |   @Access     Private - (Owner order or manager & admin)
      ***********************************************************************************/
-    public function decreaseProductsFromCart(CreateCartRequest $request)
+    public function deleteOrder($oId): JsonResponse
     {
         try {
             DB::beginTransaction();
+            $data = $this->orderRepository->delete($oId);
 
-            $uId = Auth::user()->id;
-            $data = $request->all();
-
-            return $this->responseSuccess($this->cartRepository->decrease($data, $uId));
+            return $this->responseSuccess($data, 200, 'Order deleted successfully.');
         } catch (Exception $ex) {
             DB::rollBack();
 
-            return $this->responseError(
-                is_array($ex->getMessage()) ? $ex->getMessage() : [$ex->getMessage()],
-                $ex->getCode()
-            );
-        }
-    }
-
-    /************************************************************************************
-        @desc       Destroy products from cart by specifiy cart id
-        @route      DELETE, api/cart/{cId}/products/{pId}
-        @access     Private - (Owner account)
-     ***********************************************************************************/
-    public function destroyProducts($cId, $pId)
-    {
-        try {
-            return $this->responseSuccess($this->cartRepository->destroy($cId, $pId));
-        } catch (Exception $ex) {
             return $this->responseError(
                 is_array($ex->getMessage()) ? $ex->getMessage() : [$ex->getMessage()],
                 $ex->getCode()
